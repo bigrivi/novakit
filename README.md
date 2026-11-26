@@ -353,8 +353,10 @@ loading Nova.
 ## Release process
 
 Tagging `vX.Y.Z` starts `.github/workflows/publish.yml`. It verifies the tag
-against both `pyproject.toml` and `novakit/version.py`, builds sdist/wheel, then
-publishes the same artifacts to TestPyPI before PyPI using OIDC Trusted
+against both `pyproject.toml` and `novakit/version.py`, runs the full test/lint/type
+preflight, checks distribution metadata, builds and smoke-tests sdist/wheel, then
+publishes the same artifacts to TestPyPI. An isolated TestPyPI installation must
+pass before the protected PyPI environment can publish through OIDC Trusted
 Publishing.
 
 Repository administrators must create protected GitHub environments named

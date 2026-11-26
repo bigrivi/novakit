@@ -4,7 +4,7 @@ All notable changes to `novakit` are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versioning follows
 [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.1.0] - 2026-11-26
 
 ### Added
 
@@ -43,7 +43,8 @@ All notable changes to `novakit` are documented here. The format follows
 - Portable file checkpoint capture/restore through `novakit.checkpoints`, with an
   explicit root path or root provider and no user-directory default.
 - Tagged release workflow with build/publish separation, TestPyPI-before-PyPI
-  promotion, protected environments, OIDC Trusted Publishing, and version checks.
+  promotion, protected environments, OIDC Trusted Publishing, version checks,
+  release preflight, and isolated TestPyPI install smoke.
 
 ### Changed
 
