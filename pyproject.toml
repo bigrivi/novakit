@@ -27,6 +27,7 @@ dependencies = [
 
 [project.optional-dependencies]
 images = ["pillow"]
+mcp = []
 dev = [
     "mypy>=1.11",
     "pytest>=7.4",
@@ -67,6 +68,7 @@ ignore = ["E501", "SIM105", "RUF001", "ASYNC109", "ASYNC240"]
 [tool.pytest.ini_options]
 asyncio_mode = "strict"
 asyncio_default_fixture_loop_scope = "function"
+pythonpath = ["."]
 
 [tool.coverage.run]
 source = ["novakit"]

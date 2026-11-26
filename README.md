@@ -63,6 +63,9 @@ The default session lives only in the `Agent` instance. Nothing is written to
 Every tool call announced to the caller receives a terminal result, error,
 rejection, or cancellation result.
 
+Hosts can use `InMemoryHierarchy` for live parent/child links and `SPAWN_DEPTH`
+for task-local delegation depth; neither performs persistence or global lookups.
+
 ### Configuration
 
 The runtime depends on the narrow `CoreConfig` protocol:
@@ -108,6 +111,53 @@ current-session `ContextVar`.
 
 Implement `SessionProtocol` and inject it through `AgentOptions(session=...)` to
 use a database or another persistence backend.
+
+Hosts that need branching can use `novakit.session.fork.fork_session` with a
+`SessionForkStore`; it copies whole messages, preserves tool pairing and route
+metadata, and never mutates the source session.
+
+### Session titles
+
+`novakit.agent.title.generate_session_title` builds the untrusted-message prompt,
+cleans markdown/quote wrappers, enforces the length limit, and applies a one-shot
+timeout. It returns `None` on failure and never schedules work or writes a title;
+the host decides when to run it and how to persist the result.
+
+```python
+from novakit.agent.title import generate_session_title
+
+title = await generate_session_title(
+    llm,
+    first_message="Investigate the flaky tests",
+    model="my-model",
+    session_id=session.id,
+)
+if title is not None:
+    await session.apply_generated_title(session.id, title, expected_title)
+```
+
+### Project instructions
+
+`novakit.prompt.discover_project_instructions` discovers host-supplied global
+instructions and project files from the git root to the workspace, applies
+filename precedence, screens project files for high-confidence injection shapes,
+and truncates from the broadest end. The host supplies the global directory and
+policy through `ProjectInstructionConfig`; novakit never reads `HOME` or
+`NOVA_HOME` itself.
+
+```python
+from novakit.prompt import ProjectInstructionConfig, discover_project_instructions
+
+instructions = discover_project_instructions(
+    workspace,
+    ProjectInstructionConfig(global_dir=host_instruction_dir),
+)
+```
+
+`novakit.prompt` also exposes product-neutral section helpers for ordered
+composition, environment rendering, sub-agent rosters, and abbreviated skill
+lists. Product persona, delegation policy, and final section order remain with
+the host.
 
 ### Tools and approvals
 
@@ -163,6 +213,82 @@ options = AgentOptions(
 Broader stream-end cleanup remains the host server or UI's responsibility;
 `novakit` guarantees terminal pairing inside its tool invoker.
 
+### Compaction
+
+`novakit.compaction.DefaultCompactor` provides portable history planning, tool
+result snipping, summary generation, retry, and circuit-breaking while satisfying
+the existing `Compactor` port. The default in-memory persistence adapter works
+with `InMemorySession`:
+
+```python
+from novakit import AgentOptions
+from novakit.agent import AgentPorts
+from novakit.compaction import (
+    CompactionConfig,
+    DefaultCompactor,
+    MemoryCompactionStore,
+)
+from novakit.session import InMemorySession
+
+session = InMemorySession()
+compactor = DefaultCompactor(
+    model="my-model",
+    provider="my-provider",
+    store=MemoryCompactionStore(session),
+    config=CompactionConfig(summary_keep_tokens=20_000),
+)
+options = AgentOptions(
+    session=session,
+    ports=AgentPorts(compactor=compactor),
+)
+```
+
+Hosts inject the pieces that depend on their environment:
+
+- `TokenResolver` supplies token estimates and context limits. The default uses
+  novakit's built-in model table; hosts with a model catalogue can inject their
+  own resolver.
+- `ToolOutputSink` optionally stores full tool output before it is snipped.
+  novakit calls the sink but never chooses or creates an offload directory.
+- `CompactionStore` persists content updates, summaries, compaction markers, and
+  timestamps. `MemoryCompactionStore` is the standalone default; database hosts
+  provide a thin adapter.
+
+No compaction path reads `HOME`/`NOVA_HOME`, creates user directories, or performs
+database I/O unless the host injects code that does.
+
+### Background tasks
+
+`novakit.tasks.BackgroundTaskManager` provides executor registration, separate
+foreground/background concurrency pools, per-session quotas, timeouts,
+cancellation, progress, listeners, retention, and bounded output. Hosts supply
+executors; the manager has no process-global singleton or built-in registry.
+
+```python
+from novakit.tasks import BackgroundTaskManager
+
+manager = BackgroundTaskManager(max_concurrent=2)
+# Register a host executor that implements kind and execute(...).
+record = manager.submit(
+    "host_kind",
+    {"argument": "value"},
+    session_id=session.id,
+    label="Host work",
+    timeout_seconds=30,
+    background=True,
+)
+completed = await manager.wait(record.task_id, session.id, timeout=5)
+```
+
+## Optional runtime utilities
+
+- `novakit.tasks.process.run_process` executes an explicit argv/cwd/environment,
+  streams merged output, and kills the process tree on cancellation.
+- `novakit.skills` parses and scans `SKILL.md` files under a caller-supplied root
+  and provides a case-insensitive catalog.
+- `novakit.checkpoints.CheckpointStore` captures and restores file pre-images
+  under an explicit root path or root provider. It never chooses a home directory.
+
 ## Providers
 
 Included providers:
@@ -174,6 +300,30 @@ Included providers:
 
 The package also includes streaming framing, retry policy, image handling,
 tokenization, reasoning metadata, and configurable User-Agent support.
+
+`novakit.pricing` provides pure per-million-token cost math and unknown-price
+handling. Catalogue loading and model discovery remain host responsibilities.
+
+### Optional MCP support
+
+Install the optional namespace with `pip install novakit[mcp]`. It provides a
+JSON-RPC client, stdio/HTTP transports, and deterministic tool-name allocation
+without choosing servers, settings, or permissions for the host.
+
+```python
+from novakit.mcp import McpClient, create_transport
+
+transport = create_transport({"command": "my-mcp-server"})
+await transport.connect()
+client = McpClient(
+    "my-server",
+    transport,
+    client_name="my-product",
+    client_version="1.0",
+)
+await client.initialize()
+tools = await client.list_tools()
+```
 
 ## Development
 
@@ -197,9 +347,20 @@ loading Nova.
 
 ## Documentation
 
-- [Agent handoff and roadmap](AGENT_HANDOFF.md)
 - [Changelog](CHANGELOG.md)
 - [Issues](https://github.com/bigrivi/novakit/issues)
+
+## Release process
+
+Tagging `vX.Y.Z` starts `.github/workflows/publish.yml`. It verifies the tag
+against both `pyproject.toml` and `novakit/version.py`, builds sdist/wheel, then
+publishes the same artifacts to TestPyPI before PyPI using OIDC Trusted
+Publishing.
+
+Repository administrators must create protected GitHub environments named
+`testpypi` and `pypi`, enable required reviewers for manual approval, and register
+both environments as trusted publishers on their respective PyPI indexes. The
+workflow deliberately has no long-lived API tokens.
 
 ## License
 

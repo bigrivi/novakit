@@ -164,6 +164,8 @@ class InMemorySession(SessionProtocol):
         reasoning_effort: str | None = None,
         variant: str | None = None,
         data: str | None = None,
+        summary: bool = False,
+        time_created: int | None = None,
     ) -> Message:
         """Append a message to the current session and bump its counters."""
         session = self.get_current_session()
@@ -191,7 +193,8 @@ class InMemorySession(SessionProtocol):
             reasoning_effort=reasoning_effort,
             variant=variant,
             data=data,
-            time_created=now,
+            summary=1 if summary else 0,
+            time_created=now if time_created is None else time_created,
         )
         async with self._lock:
             self._messages.setdefault(session.id, []).append(message)
@@ -204,6 +207,70 @@ class InMemorySession(SessionProtocol):
             session.turn_count += 1
             session.updated_at = now
         return message
+
+    async def update_message_content(self, message_id: str, content: str) -> bool:
+        """Replace a message's content, mirroring it into ``data`` like Nova.
+
+        Args:
+            message_id: Message to update.
+            content: Replacement content.
+
+        Returns:
+            True when a message with that ID was found.
+        """
+        async with self._lock:
+            for stored in self._messages.values():
+                for message in stored:
+                    if message.id == message_id:
+                        message.content = content
+                        message.data = content
+                        return True
+        return False
+
+    async def mark_messages_compacted_by_ids(
+        self, session_id: str, message_ids: list[str]
+    ) -> int:
+        """Hide the named messages of one session from later reads.
+
+        Args:
+            session_id: Session owning the messages.
+            message_ids: Messages to hide.
+
+        Returns:
+            How many messages were matched.
+        """
+        if not message_ids:
+            return 0
+        wanted = set(message_ids)
+        marked = 0
+        async with self._lock:
+            for message in self._messages.get(session_id, []):
+                if message.id in wanted:
+                    message.compacted = 1
+                    marked += 1
+        return marked
+
+    async def update_session_compacted_at(
+        self, session_id: str, timestamp: int
+    ) -> bool:
+        """Stamp when the last successful compaction ran.
+
+        Args:
+            session_id: Session to stamp.
+            timestamp: Successful-compaction time in milliseconds.
+
+        Returns:
+            True when the session is known.
+        """
+        async with self._lock:
+            session = self._sessions.get(session_id)
+            if session is None:
+                return False
+            session.compacted_at = timestamp
+        current = self.get_current_session()
+        if current is not None and current is not session and current.id == session_id:
+            current.compacted_at = timestamp
+        return True
 
 
 __all__ = ["InMemorySession"]
