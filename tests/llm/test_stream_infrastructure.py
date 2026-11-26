@@ -396,21 +396,25 @@ class TestPollerFailures:
         assert "cancelled" in str(caught.value)
 
     @pytest.mark.asyncio
-    async def test_own_cancellation_reraises(self) -> None:
+    async def test_own_cancellation_reraises(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         async def _cancelled() -> bytes:
             raise asyncio.CancelledError
 
+        class _CancellingTask:
+            def cancelling(self) -> int:
+                return 1
+
         task: asyncio.Task[bytes] = asyncio.ensure_future(_cancelled())
         await asyncio.sleep(0)
+        monkeypatch.setattr(
+            "novakit.llm.stream_read.asyncio.current_task",
+            lambda: _CancellingTask(),
+        )
         poller = StreamPoller(_reader([]), None, _trace(), poll_seconds=POLL)
-        current = asyncio.current_task()
-        assert current is not None
-        current.cancel()
-        try:
-            with pytest.raises(asyncio.CancelledError):
-                poller._read_outcome(task)
-        finally:
-            current.uncancel()
+        with pytest.raises(asyncio.CancelledError):
+            poller._read_outcome(task)
 
     @pytest.mark.asyncio
     async def test_plain_read_error_propagates(self) -> None:
