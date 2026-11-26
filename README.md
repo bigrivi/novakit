@@ -1,9 +1,28 @@
-# novakit
+<div align="center">
+  <h1>novakit</h1>
+  <p>
+    <a href="https://github.com/bigrivi/novakit/actions/workflows/ci.yml">
+      <img src="https://github.com/bigrivi/novakit/actions/workflows/ci.yml/badge.svg" alt="CI">
+    </a>
+    <a href="https://pypi.org/project/novakit/">
+      <img src="https://img.shields.io/pypi/v/novakit.svg?color=%2334D058&label=pypi%20package" alt="PyPI version">
+    </a>
+    <a href="https://pypi.org/project/novakit/">
+      <img src="https://img.shields.io/pypi/pyversions/novakit.svg?color=%2334D058" alt="Python versions">
+    </a>
+    <a href="https://github.com/bigrivi/novakit/releases/latest">
+      <img src="https://img.shields.io/github/v/release/bigrivi/novakit.svg?color=%2334D058" alt="GitHub release">
+    </a>
+    <a href="LICENSE">
+      <img src="https://img.shields.io/badge/license-Apache--2.0-blue.svg" alt="Apache 2.0 license">
+    </a>
+  </p>
+  <p><i>Embeddable, in-memory-first Python runtime for LLM agents.</i></p>
+</div>
 
-`novakit` is an embeddable, in-memory-first Python runtime for LLM agents. It
-provides providers, streaming events, tool execution, sessions, and approvals
-without coupling applications to Nova's server, desktop, user directory, or
-database.
+`novakit` provides providers, streaming events, tool execution, sessions, and
+approvals without coupling applications to Nova's server, desktop, user directory,
+or database.
 
 ## Installation
 
