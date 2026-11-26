@@ -27,6 +27,9 @@ htmlcov/
 # Local handoff notes
 /AGENT_HANDOFF.md
 
+# Docs build output
+site/
+
 # Local configuration and secrets
 .env
 .env.*

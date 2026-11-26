@@ -16,6 +16,9 @@
     <a href="LICENSE">
       <img src="https://img.shields.io/badge/license-Apache--2.0-blue.svg" alt="Apache 2.0 license">
     </a>
+    <a href="https://bigrivi.github.io/novakit/">
+      <img src="https://img.shields.io/badge/docs-github%20pages-blue.svg" alt="Documentation">
+    </a>
   </p>
   <p><i>Embeddable, in-memory-first Python runtime for LLM agents.</i></p>
 </div>
@@ -366,6 +369,7 @@ loading Nova.
 
 ## Documentation
 
+- [Documentation site](https://bigrivi.github.io/novakit/)
 - [Changelog](CHANGELOG.md)
 - [Issues](https://github.com/bigrivi/novakit/issues)
 
