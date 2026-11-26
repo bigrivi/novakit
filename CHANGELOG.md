@@ -9,6 +9,8 @@ All notable changes to `novakit` are documented here. The format follows
 ### Added
 
 - Bilingual English/Chinese docs with English default and /zh/.
+- Tutorial-style runnable examples covering all public SDK feature areas, with
+  offline CI smoke coverage and a real-provider quickstart.
 
 ## [0.1.0] - 2026-11-26
 

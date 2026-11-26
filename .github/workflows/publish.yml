@@ -22,13 +22,13 @@ jobs:
       - name: Validate tag and versions
         run: python scripts/check_version_tag.py --tag "${GITHUB_REF_NAME}"
       - name: Install development dependencies
-        run: uv sync --locked --extra dev
+        run: uv sync --locked --extra dev --extra images
       - name: Run tests with coverage
         run: uv run pytest -q --cov=novakit --cov-report=term-missing
       - name: Lint and format check
         run: |
-          uv run ruff check novakit tests scripts
-          uv run ruff format --check novakit tests scripts
+          uv run ruff check novakit tests scripts examples
+          uv run ruff format --check novakit tests scripts examples
       - name: Type check
         run: uv run mypy
       - name: Build sdist and wheel

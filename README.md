@@ -67,6 +67,25 @@ asyncio.run(main())
 The default session lives only in the `Agent` instance. Nothing is written to
 `HOME`, `NOVA_HOME`, or `~/.nova`, and no database connection is opened.
 
+## Examples
+
+Runnable examples covering every public feature area live in
+[`examples/`](examples/README.md). With the image dependency installed:
+
+```bash
+uv sync --locked --extra dev --extra images
+```
+
+`examples/02_*`–`examples/20_*` run offline with no keys or network:
+
+```bash
+uv run python examples/02_events_and_streaming.py
+```
+
+`examples/01_quickstart.py` is a real-provider quickstart: configure provider
+environment variables first (see [`examples/README.md`](examples/README.md)).
+It requires network access and is excluded from offline smoke.
+
 ## Core concepts
 
 ### Agent runtime

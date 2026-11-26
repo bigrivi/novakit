@@ -83,6 +83,10 @@ The default session lives only inside the `Agent` instance. See
 [Installation](getting-started/installation.md) for Python version and extras, and
 [Configuration](guides/configuration.md) for the core/host field split.
 
+For more complete scenarios, browse the
+[runnable examples](https://github.com/bigrivi/novakit/tree/main/examples),
+including providers, tools, approvals, compaction, tasks, MCP, and utilities.
+
 ## License
 
 [Apache-2.0](https://github.com/bigrivi/novakit/blob/main/LICENSE)

@@ -81,6 +81,9 @@ asyncio.run(main())
 [安装](getting-started/installation.md)，核心/宿主字段划分见
 [配置](guides/configuration.md)。
 
+更完整的场景请浏览[可运行示例](https://github.com/bigrivi/novakit/tree/main/examples)，
+涵盖 Provider、工具、审批、上下文压缩、任务、MCP 与工具函数。
+
 ## 许可证
 
 [Apache-2.0](https://github.com/bigrivi/novakit/blob/main/LICENSE)
