@@ -20,12 +20,24 @@
       <img src="https://img.shields.io/badge/docs-github%20pages-blue.svg" alt="Documentation">
     </a>
   </p>
-  <p><i>Embeddable, in-memory-first Python runtime for LLM agents.</i></p>
+  <p><i>An embeddable Agent kernel for Python — complete runtime, host-owned infrastructure.</i></p>
 </div>
 
-`novakit` provides providers, streaming events, tool execution, sessions, and
-approvals without coupling applications to Nova's server, desktop, user directory,
-or database.
+`novakit` gives Python applications a complete Agent runtime without coupling
+them to a server, desktop, user directory, database, or product-specific policy.
+Hosts keep control of persistence, approvals, context management, and tools.
+
+## Why novakit?
+
+- **Standalone by design:** install it with `pip` and run it without Nova, a
+  database, or user-directory access.
+- **One reliable runtime:** reuse the shared turn loop, streaming events, tool
+  execution, and terminal tool-call pairing instead of reimplementing them.
+- **Host-owned infrastructure:** inject your own session store, approval manager,
+  compactor, checkpoints, and task executors through explicit ports.
+- **Portable capabilities:** providers, MCP, compaction, background tasks,
+  project instructions, hierarchy, skills, and pricing work outside any single
+  host product.
 
 ## Installation
 
